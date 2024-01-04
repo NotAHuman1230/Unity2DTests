@@ -1,0 +1,37 @@
+#pragma kernel CSMain
+
+float2 resolution;
+float subtract;
+float blur;
+float deltaTime;
+RWTexture2D<float4> input;
+RWTexture2D<float4> result;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float2 uv = id.xy / resolution;
+    if (uv.x > 1.0 || uv.y > 1.0 || uv.x < 0.0 || uv.y < 0.0)
+        return;
+    
+    float4 average = float4(0.0, 0.0, 0.0, 0.0);
+    
+    int blurSize = 2;
+    for (int x = -blurSize; x <= blurSize; x++)
+    {
+        for (int y = -blurSize; y <= blurSize; y++)
+        {
+            if(id.x + x < 0.0 || id.x + x > resolution.x || id.y + y < 0.0 || id.y + y> resolution.y)
+                continue;
+            
+            average += input[int2(id.x + x, id.y + y)];
+        }
+    }
+
+    average /= ((blurSize * 2.0) + 1.0) * ((blurSize * 2.0) + 1.0);
+    average = clamp(average, 0.0, 1.0);
+    float4 blurred = lerp(input[id.xy], average, blur * deltaTime);
+    
+    float4 newColor = clamp(blurred - float4(subtract * deltaTime, subtract * deltaTime, subtract * deltaTime, 0.0), 0.0, 1.0);
+    result[id.xy] = newColor;
+}

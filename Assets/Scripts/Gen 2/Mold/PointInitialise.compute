@@ -1,0 +1,36 @@
+#pragma kernel InitialisePoints
+
+struct Point
+{
+    float2 position;
+    float direction;
+};
+
+static const float PI = 3.14159265f;
+
+float2 screenResolution;
+float2 pointResolution;
+float2 seed;
+RWStructuredBuffer<Point> points;
+
+float random(float2 uv)
+{
+    return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453123);
+}
+float2 angle2Vector(float angle)
+{
+    return float2(sin(angle), cos(angle));
+}
+
+[numthreads(10, 1, 1)]
+void InitialisePoints(uint3 id : SV_DispatchThreadID)
+{
+    float2 uv = id.xy / pointResolution;
+    if (uv.x > 1.0 || uv.y > 1.0 || uv.x < 0.0 || uv.y < 0.0)
+        return;
+    
+    Point target = points[id.x];
+    target.position = int2(random(uv + seed) * screenResolution.x, random(uv + seed + float2(10.0, 100.0)) * screenResolution.y);
+    target.direction = random(uv + seed + float2(15.0, 75.0)) * 2.0 * PI;
+    points[id.x] = target;
+}

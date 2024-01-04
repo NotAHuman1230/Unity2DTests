@@ -1,0 +1,48 @@
+#pragma kernel UpdatePoints
+
+struct Point
+{
+    float2 position;
+    float direction;
+};
+
+static const float PI = 3.14159265f;
+
+float speed;
+float2 pointResolution;
+float2 screenResolution;
+float2 seed;
+RWStructuredBuffer<Point> points;
+RWTexture2D<float4> result;
+
+float random(float2 uv)
+{
+    return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453123);
+}
+float2 angle2Vector(float angle)
+{
+    return float2(sin(angle), cos(angle));
+}
+
+[numthreads(10, 1, 1)]
+void UpdatePoints(uint3 id : SV_DispatchThreadID)
+{
+    float2 uv = id.xy / pointResolution;
+    if (uv.x > 1.0 || uv.y > 1.0 || uv.x < 0.0 || uv.y < 0.0)
+        return;
+    
+    Point target = points[id.x];
+    
+    result[int2(round(target.position))] = float4(1.0, 1.0, 1.0, 1.0);
+    
+    float2 position = target.position + angle2Vector(target.direction) * speed;
+    if (position.x > screenResolution.x || position.y > screenResolution.y|| position.x < 0.0 || position.y < 0.0)
+    {
+        target.direction = random(uv + seed + float2(13.0, 8.0)) * 2.0 * PI;
+        points[id.x] = target;
+        return;
+    }
+    
+    target.position = position;
+    points[id.x] = target;
+}

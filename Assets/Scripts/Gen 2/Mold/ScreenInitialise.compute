@@ -1,0 +1,14 @@
+#pragma kernel CSMain
+
+float2 resolution;
+RWTexture2D<float4> result;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float2 uv = id.xy / resolution;
+    if (uv.x > 1.0 || uv.y > 1.0 || uv.x < 0.0 || uv.y < 0.0)
+        return;
+
+    result[id.xy] = float4(0.0, 0.0, 0.0, 1.0);
+}
