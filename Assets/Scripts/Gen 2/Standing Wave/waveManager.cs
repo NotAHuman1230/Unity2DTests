@@ -61,7 +61,7 @@ public class waveManager : MonoBehaviour
         generateWave(wave2, -phase);
         superPosition(wave1, wave2, standingWave);
     }
-
+    
     void generateWave(LineRenderer _line, float _phase)
     {
         if (wavelength == 0f)
